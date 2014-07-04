@@ -1,0 +1,95 @@
+pilha.txt
+Sugestôes de implementação de uma pilha em C++.
+
+
+A pilha é uma estrutura de dados muito simples usada em algoritmos.
+Uma pilha consiste numa sequência de valores armazenada em memória,
+dispostos do fundo ao topo. Ela suporta quatro operações:
+    1. Adicionar novo dado no topo (push);
+    2. Remover um dado do topo (pop);
+    3. Olhar o dado do topo, sem removê-lo (top);
+    4. Testar se a pilha está vazia (empty).
+
+Uma forma de implementar uma pilha é usar uma lista encadeada;
+esta técnica permite que a pilha cresca indefinidamente (enquanto
+houver memória disponível no computador). É assim que a pilha
+da STL é implementada.
+
+    #include <stack>
+    std::stack< char > stack;
+
+Entretanto, para problemas da Maratona, não existe a exigência de
+crescimento indefinido da pilha: os problemas contêm o tamanho
+máximo das instâncias, portanto, o tamanho da pilha pode ser previsto.
+Como a pilha é um objeto bastante simples, também não há necessidade
+de uma classe separada para ela; podemos implementá-la 
+usando um array e um inteiro.
+
+    char stack[100];
+    int top = -1;
+
+Pela sua simplicidade, a última forma é preferida.
+top é o índice do elemento que está no topo; para implementar
+a operação 4, basta uma comparação:
+
+    if( top == -1 )
+        // stack is empty
+
+Para a primeira operação, temos de incrementar o topo da pilha
+(para encontrar uma posição vazia) e depois atribuir o elemento.
+Usando pré-incremento, podemos fazer isto numa única expressão:
+
+    stack[++top] = dataToBePushed;
+
+Obter o dado do topo (operação 3) também é simples:
+
+    char dataOnTop = stack[top];
+
+E, para desempilhar um elemento (operação 2), basta fazer
+
+    --top;
+
+Geralmente, queremos combinar as operações 2 e 3. Primeiro extraimos
+o dado do topo da pilha, e depois decrementamos top. Usando pós-decremento,
+podemos fazer ambas as operações na mesma expressão:
+
+    char dataPreviouslyOnTop = stack[top--];
+
+A pilha da STL não permite fazer estas duas operações simultaneamente.
+Ela foi costruída para tipos arbitrários, que podem ter destrutores
+complexos que precisam ser executados e construtores
+de cópia e operadores de atribuição que lançam exceptions.
+Para executar estas operações em sequência, são necessários quatro passos:
+    1. Copiar o topo da pilha para uma variável temporária.
+    2. Destruir o elemento do topo da pilha.
+    3. Decrementar o ponteiro para o topo (ou, no caso de uma lista
+       encadeada, atualizar o ponteiro na cabeça da lista).
+    4. Retornar a variável temporária.
+O problema está no quarto passo. Os dados da variável temporária serão
+armazenados num objeto no contexto da função chamadora, chamando o
+construtor de cópia (ou operador de atribuição) do objeto. Caso o objeto
+lance uma exceção neste momento, o topo da pilha será perdido, pois a
+construção/cópia fracassou e o objeto original já foi destruído.
+Para evitar este tipo de problema, a pilha da STL retorna void.
+
+Sob este viés, nossa implementação das operações 1 e 2 também precisariam
+ser revistos: nenhum destrutor é chamado ao decrementar o topo,
+nem construtores são chamados ao fazer atribuição no próximo espaço vazio.
+De fato, sequer sabemos se dá para criar um array do tipo requisitado;
+para criar um array, o C++ exige que o construtor padrão esteja disponível
+e visível (isto é, não é privado ou protegido). Precisaríamos alocar
+memória bruta e usar placement new. Se o seu código para a Maratona
+exige estes cuidados, você está fazendo algo errado.
+
+
+Códigos que utilizam estas técnicas:
+
+- problemas/spoj-br/expres11.cpp
+Um truque interessante é usado neste código:
+    if( top == -1 || stack[top--] != '(' )
+        return false;
+Ele se baseia no fato de os operadores lógicos do C++ operarem em
+curto-circuito: caso o primeiro teste seja verdadeiro, a expressão toda
+é verdadeira, então a segunda subexpressão sequer é calculada.
+Ou seja: se a pilha estiver vazia (top == -1), o código não tenta
+desempilhar dados, evitando falhas de segmentação.

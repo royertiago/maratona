@@ -21,3 +21,8 @@ no juíz online, contendo, no mínimo, três arquivos:
 *   problema.out
 
     A saída do programa que "responde" aos exemplos de entrada.
+
+
+Por exemplo, o problema "Expressões", do SPOJ-BR, possui o código
+EXPRES11 e está catalogado pelos arquivos expres11.cpp, expres11.in
+e expres11.out, no diretório spoj-br.
