@@ -1,0 +1,110 @@
+entrada_saida.txt
+Sugestões para o uso de entrada e saída nos problemas.
+
+
+    Prefira stdio.h a iostream
+
+Em projetos de software, iostream geralmente é uma escolha melhor, 
+devido à sua flexibilidade e extensibilidade (existe a possibilidade de
+definir impressão de tipos do usuário, por exemplo). Esta maleabilidade
+não é necessária num problema da maratona, onde a entrada e saída de
+dados tendem a ser muito simples, e o fato de printf's complexos serem
+mais compactos que std::cout's complexos pesa a favor de stdio.h.
+
+Além disso, observações empíricas (feitas pelo autor deste texto)
+sugerem que printf seja mais rápido do que scanf. O problema
+http://br.spoj.com/problems/SOMA/ possui duas soluções disponíveis:
+spoj-br/soma.a.cpp, que utiliza stdio.h, e spoj-br/soma.b.cpp, que
+utiliza iostream. A primeira solução rodou em 0.04s no juíz, enquanto
+que a segunda demorou 0.10s.
+Um exemplo mais crítico é http://br.spoj.com/problems/F91/. A solução
+spoj-br/f91.a.cpp é aceita (em 1.00s); uma otimização presente em
+spoj-br/f91.b.cpp baixa este tempo para 0.58s. Já spoj-br/f91.c.cpp,
+igual à solução 'b' (exceto por usar iostream), excede o tempo limite. 
+(Mais observações deveriam ser feitas para estabelecer uma diretriz,
+mas, na dúvida, vá de printf.)
+
+Nota sobre cstdio: stdio.h é um cabeçalho do C. Uma das principais metas
+do C++ foi (e provavelmente sempre será) manter retrocompatibilidade com
+o C. Portanto, cabeçalhos como stdio.h e stdlib.h estão disponíveis
+diretamente a programadores C++, sem precisar de modificações.
+Entretanto, o C não tem recursos (nativos) para a definição e separação
+de módulos, enquanto no C++ temos namespaces; em vista disso, quase todos 
+os cabeçalhos do C estão disponíveis para C++ numa versão que "embrulha"
+as funções do C no namespace std. stdio.h se apresenta como cstdio,
+stdlib.h vira cstdlib e por aí vai. Portanto, o correto seria sempre
+escrever 
+    #include <cstdlib>
+e nos referirmos às funções como
+    std::printf( "%6.2lf\n", meuDoubleFofinho );
+ou escrever "using namespace std;" no início do código.
+De fato, os stdio.h/stdlib.h e amigos são tradatos como obsoletos pelo
+padrão do C++. Entretanto, este mesmo padrão permite que os cabeçalhos
+cstdio/cstdlib e outros vindos do C declarem as funções/variáveis no
+namespace global primeiro e depois injetem estes nomes no namespace std
+(Anexo D.5 do C++ Standard).
+Ou seja: stdio.h não deveria ser usado, mas provavelmente não vai machucar.
+
+
+
+    Não esqueça do \0 terminal na entrada!
+
+Um erro que o autor deste texto cometeu mais vezes do que ele gostaria
+de admitir é esquecer que scanf("%s") e cin.getline() "completa" a cadeia
+de caracteres lida da entrada com o caractere nulo.
+Então, num problema cuja entrada possua cadeias de caracteres, declare
+o buffer de leitura com uma posição a mais do que a cadeia máxima a ser
+lida. Por exemplo, http://br.spoj.com/problems/EXPRES11/ limita a cadeia
+da entrada em 100 000 caracteres, então o buffer de leitura deve ter,
+ao menos, 100 001 posições disponíveis. Declarar o buffer com 100 000
+posições faz com que a solução seja rejeitada, pois o juíz testa o programa
+com strings no tamanho limite, fazendo com que um \0 seja escrito no
+lugar errado - um erro off-by-one.
+
+
+
+    Abuse do fato de o C++ permitir expressões complexas num laço.
+
+Tanto scanf quanto std::cin retornam informações que dizem respeito
+ao seu status após ler dados da entrada. 
+scanf retorna a quantidade de variáveis lidas com sucesso nesta execução,
+ou EOF caso haja algum erro antes de ler o primeeiro argumento.
+Os operadores do tipo operator>>( std::iostream&, T& type ) 
+retornam um std::iostream&, que é implicitamente conversível para bool,
+indicando ausência de erros.
+
+    if( scanf( "%d", &i ) != EOF )
+        // o inteiro foi lido com sucesso
+    if( std::cin >> j )
+        // também não ocorreram erros
+
+Isto permite codificar comandos como "leia tudo até o fim do arquivo"
+ou "leia tudo até ler um zero" de forma muito compacta:
+
+    while( std::cin >> atual ) {
+        // processar o inteiro atual
+        // extraído de spoj-br/soma.b.cpp
+    }
+
+    while( scanf("%d", &n) && n != 0 ) {
+        // processar o inteiro n
+        // extraído de spoj-br/f91.a.cpp
+    }
+
+Neste último exemplo, também estamos aproveitando a ordem que o C/C++
+impõe nos operadores booleanos.
+
+
+
+    Ao usar scanf, prefira "%d" a "%i"
+
+A formatação %d lerá um número em formato decimal, enquanto %i lê
+um inteiro que pode estar em decimal, hexadecimal ou octal. A função
+diferencia o formato pelos caracteres iniciais: 0x indica hexadecimal,
+0 octal e outros dígitos indica decimal. Portanto:
+    scanf( "%i", &i );
+    printf( "%i", i );
+Ao digitar 010 no terminal, o programa imprimirá "8", enquanto que com
+    scanf( "%d", &i );
+    printf( "%i", i );
+(note o %d ao invés de %i) o programa imprime "10".
