@@ -1,0 +1,30 @@
+sentinela.txt
+Uso de valor sentinela
+
+
+    Uso de sentinelas em algoritmos
+
+Muitos algoritmos que trabalham com pilhas e listas
+têm de incluir um teste para o caso especial de a estrutura estar vazia.
+Por exemplo, uma lista encadeada poderia manter na cabeça da lista
+um ponteiro para o primeiro nó da estrutura e um ponteiro vazio caso este
+nó não exista; uma função de busca linear deve ter o cuidado de não
+derreferenciar este ponteiro nulo. Uma pilha também não pode desempilhar
+alguma coisa da pilha vazia.
+
+Um valor sentinela é algum valor que não altera a corretude de um algoritmo,
+mas livra o programador de testar casos extremos, que não ocorrerão por causa
+da existência de um valor sentinela. Por exemplo: a função de busca linear
+num vetor de tamanho 'n' pode retornar o valor 'n' caso o elemento desejado
+não seja encontrado. Um algoritmo poderia copiar o valor procurado para a
+posição após o fim do vetor. Desta forma, a busca sempre encontraria o
+elemento; mas, caso o elemento encontrado seja o último, a resposta é a mesma
+do algoritmo anterior, e elimina a necessidade de testar o índice do iterador
+contra o fim do vetor.
+
+Um exemplo mais prático é o código de spoj-br/expres11.b.cpp - compare-o
+com a versão "a"; o código é muito parecido, mas na versão "b" não há 
+necessidade de testar se a pilha está vazia: caso ela esteja, o algoritmo
+desempilhará o valor sentinela, que nunca é '(', '[' ou '{'.
+Desta forma, embora a corretude e a complexidade do programa não sejam
+afetados, o código fica um pouco mais simples.

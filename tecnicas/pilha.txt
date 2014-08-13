@@ -84,7 +84,7 @@ exige estes cuidados, você está fazendo algo errado.
 
 Códigos que utilizam estas técnicas:
 
-- problemas/spoj-br/expres11.cpp
+- problemas/spoj-br/expres11.a.cpp
 Um truque interessante é usado neste código:
     if( top == -1 || stack[top--] != '(' )
         return false;

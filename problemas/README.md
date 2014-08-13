@@ -11,6 +11,8 @@ no juíz online, contendo, no mínimo, três arquivos:
 *   problema.cpp
     
     Código que soluciona o problema proposto.
+    Pode ser que mais de um código solucione o problema; neste caso,
+    referenciaremos como problema.a.cpp, problema.b.cpp, etc.
 
 *   problema.in
 
@@ -24,5 +26,5 @@ no juíz online, contendo, no mínimo, três arquivos:
 
 
 Por exemplo, o problema "Expressões", do SPOJ-BR, possui o código
-EXPRES11 e está catalogado pelos arquivos expres11.cpp, expres11.in
-e expres11.out, no diretório spoj-br.
+EXPRES11 e está catalogado pelos arquivos expres11.a.cpp, express11.b.cpp,
+expres11.in e expres11.out, no diretório spoj-br.
