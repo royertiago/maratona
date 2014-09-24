@@ -28,3 +28,8 @@ no juíz online, contendo, no mínimo, três arquivos:
 Por exemplo, o problema "Expressões", do SPOJ-BR, possui o código
 EXPRES11 e está catalogado pelos arquivos expres11.a.cpp, express11.b.cpp,
 expres11.in e expres11.out, no diretório spoj-br.
+
+Alguns problemas (como os de edições passadas da maratona) possuem
+os arquivos de entrada e saída disponíveis. Nestes casos, também existem
+arquivos de entradas do tipo problema.in1, problema.in2 com as respectivas
+soluções problema.out1, problema.out2.
