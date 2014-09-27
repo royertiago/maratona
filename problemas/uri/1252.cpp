@@ -19,13 +19,14 @@ int main() {
         sort( values, values + i, [&n]( int a, int b ){
                 if( a % n < b % n ) return true;
                 if( a % n > b % n ) return false;
-                if( a % 2 != 0 )
+                if( a % 2 != 0 ) {
                     if( b % 2 == 0 ) return true;
                     else return a > b;
+                }
                 if( b % 2 != 0 ) return false;
                 return a < b;
             } );
-        for( int i = 0; i < m; ++i ) printf( "%i\n", values[i] );
+        for( i = 0; i < m; ++i ) printf( "%i\n", values[i] );
     }
     printf( "0 0\n" );
     return 0;

@@ -25,9 +25,9 @@ int main() {
                 if( mq )   q.push( val );
                 if( mpq )  pq.push( val );
             } else {
-                if( mvec ) if( vec.back() != val ) mvec = false; else vec.pop_back();
-                if( mq )   if( q.front() != val ) mq = false; else q.pop();
-                if( mpq )  if( pq.top() != val ) mpq = false; else pq.pop();
+                if( mvec ){if( vec.back() != val ) mvec = false; else vec.pop_back();}
+                if( mq )  {if( q.front() != val ) mq = false; else q.pop();          }
+                if( mpq ) {if( pq.top() != val ) mpq = false; else pq.pop();         }
             }
         }
         if( mvec + mq + mpq >= 2 ) printf( "not sure\n" );

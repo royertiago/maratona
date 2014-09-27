@@ -47,15 +47,15 @@ ll solve() {
 
 int main() {
     scanf( "%u", &N );
-    for( int current = 1; current <= N; ++current ) {
+    for( unsigned current = 1; current <= N; ++current ) {
         scanf( "%u%u%llu%llu%llu", &n, &m, &X, &Y, &Z );
-        for( int i = 0; i < m; ++i )
+        for( unsigned i = 0; i < m; ++i )
             scanf( "%u", &A[i] );
 
-        for( int i = 0; i < n; ++i ) {
+        for( unsigned i = 0; i < n; ++i ) {
             limits[i].value = A[i % m];
             limits[i].index = i + 1;
-            A[i % m] = (X * A[i % m] + Y *(i + 1)) % Z;
+            A[i % m] = (unsigned) ((X * A[i % m] + Y * (i + 1)) % Z);
         }
         
         sort( limits, limits + n, ordered );

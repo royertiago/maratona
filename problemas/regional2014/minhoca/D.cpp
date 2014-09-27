@@ -50,7 +50,7 @@ int dfs( int node, int previous = 0 ) {
 
 void dfs() {
     for( int i = 0; i <= S; ++i )
-        parent[i] = visited[i] = distance[i] = cycle[i] = 0;
+        parent[i] = distance[i] = cycle[i] = visited[i] = 0;
 
     dfs(1);
 }

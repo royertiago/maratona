@@ -14,7 +14,7 @@ unsigned solve( unsigned size ) {
 
 int main() {
     unsigned size;
-    scanf( "%d", &size );
-    printf( "%d\n", solve(size) );
+    scanf( "%u", &size );
+    printf( "%u\n", solve(size) );
     return 0;
 }
