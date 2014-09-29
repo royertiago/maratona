@@ -4,41 +4,86 @@
 #
 # Execute na forma "ferrametas/run.sh problemas/ecnu/2189"; isso irá compilar
 # o executável ecnu/2189
+#
+# Definição do formato das entradas:
+# Assumir-se-á que existe, em algum dos diretórios-pai, um arquivo chamado
+# inputformat.sh. Para mais informações, veja problemas/inputformat.sh
 
-if [ -z $1 ]
-then
-    echo "Usage: $0 judge/file"
-    exit 1
-fi
 
-TARGET=$1
-CXX=g++
-if [ ! -z $2 ]
-then
-    CXX=$2
-fi
+# get_input_format( file_name, old_wd )
+# Função que navegará até o diretório de file_name e procurará nos diretórios
+# "ancestrais" por um arquivo chamado inputformat.sh, executando
+# "source" neste arquivo. Após, retornamos para old_wd.
+get_input_format() {
+    cd $(dirname "$1")
+    while true
+    do
+        if [ -e inputformat.sh ]
+        then
+            source inputformat.sh
+            break
+        fi
+        cd ..
+    done
+    cd "$2"
+}
 
-# Para que possamos lidar com targets da forma spoj-br/express11.a,
-# precisamos remover aquele ".a" do final.
-STARGET=`sed -e "s/\.[a-z]//" <<< $TARGET` # "stripped target"
+# readflags()
+# Função que criticará a entrada de dados e modificará as variáveis
+# filename e CXX de acordo com sua semânticae
+readflags() {
+    if [ -z $1 ]
+    then
+        echo "Usage: $0 judge/file [compiler]"
+        exit 1
+    fi
 
-INPUT=$STARGET.in*
-OUTPUT=(`sed "s/\.in/\.out/" <<< "$INPUT"`)
-INPUT=($INPUT)
-# Agora, INPUT e OUTPUT são arrays "pareados".
+    filename=$1
 
-set -e # Primeiro comando com status não-zero encerra execução
+    CXX="g++ -std=c++11"
+    if [ ! -z $2 ]
+    then
+        CXX=$2
+    fi
+}
 
-echo $CXX -std=c++11 $TARGET.cpp
-$CXX -std=c++11 $TARGET.cpp
+# compile( filename )
+# Função que compilará o prpgrama.
+compile() {
+    echo $CXX $filename
+    $CXX $filename
+}
 
-THEN=`date +%s%N`
+# remove_extension( filename )
+# Remove a extensão do nome do arquivo.
+# Por conveniência, caso haja um caraactere alfabético precedido de um ponto
+# antes do nome do arquivo, este é removido também.
+# Por exemplo, abc.a.cpp vira abc
+#              abc.4.cpp vira abc.4
+#
+# O valor de retorno é impresso em stdin.
+remove_extension() {
+    sed -e "s/\(\.[a-z]\)\?\.[a-z]*//" <<< "$1"
+}
 
-for((i=0;i<${#INPUT[@]};++i)); do
-    echo ${INPUT[i]}
-    ./a.out < ${INPUT[i]} | diff - ${OUTPUT[i]}
+
+# main
+
+set -e
+
+readflags "$@"
+compile "$filename"
+get_input_format "$filename" "$(pwd)"
+inputformat $filename
+
+time_then=$(date +%s%N)
+
+for file in $inputformat_files
+do
+    echo $file
+    ./a.out < $file | diff - $($inputformat_sed <<< "$file")
 done
 
-NOW=`date +%s%N`
-MS=`dc -e "$NOW $THEN - 1000000 / n"`
-echo Tempo total: $MS ms
+time_now=$(date +%s%N)
+milisseconds=$(dc -e "$time_now $time_then - 1000000 / n")
+echo Tempo total: $milisseconds ms
