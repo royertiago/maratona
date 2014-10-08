@@ -1,0 +1,110 @@
+precisao_arbitraria.txt
+Aritmética de inteiros com precisão arbitrária.
+
+
+    Introdução
+
+Na maior parte dos problemas estilo maratona, aritmética com 64 bits
+é suficiente. Em alguns casos específicos, entretanto, é necessário o uso
+de inteiros maiores que 64 bits; isto é, usar inteiros de precisão
+arbitrária. Como em C e C++ não existem classes que abstraem estes detalhes,
+aqui encontra-se alguns truques que permitem extender os limites de
+representação dos tipos nestas linguagens.
+
+
+    Abreviações
+
+typedef long long unsigned llu;
+
+
+
+    Algoritmos de correção de precisão
+
+Estes algoritmos são semelhantes à função fma, de math.h, no C11:
+usam truques que permitem circundar os limites de representação da máquina,
+mas tanto as entradas quanto as saídas precisam estar sob certos limites.
+
+
+/* mmu( a, b, m )
+ * Calcula 'a * b % m' corretamente, mesmo que 'a * b' não seja 
+ * representável num long long unsigned.
+ * Usa: __builtin_clzll
+ * Hipótese: 1 <= m <= 2**63 - 1 ~= 9.22e18 */
+llu mm( llu a, llu b, llu m ) {
+    unsigned step = __builtin_clzll(m);
+    llu mask = (1llu << step) - 1;
+    a %= m; b %= m;
+    llu res = 0;
+    do {
+        res = ( res + a * (b & mask) ) % m;
+        a = (a << step) % m;
+    } while( (b >>= step) != 0 );
+    return res;
+}
+
+Demonstração de corretude:
+(a demonstração assume que llu é um inteiro sem sinal de 64 bits.)
+__builtin_clzll conta os zeros iniciais de um long long (count leading zeros).
+Desta forma, multiplicar m por 2**__builtin_clzll(m) == 2**step, isto é, 
+deslocar m step bits para a esquerda, produzirá um inteiro representável em 
+64 bits. De fato, multiplicar qualquer inteiro entre zero e m por qualquer
+inteiro entre zero e 2**step produz um número representável em 64 bits.
+Esta observação será importante abaixo.
+
+A demonstração é por invariante de laço. Manteremos as seguintes proposições:
+1. (res + a * b) % m == a_0 * b_0 % m
+2. res, a < m
+
+Primeiramente, note que, ao iniciar a primeira execução do laço, res vale 0,
+e nós apenas substituimos a e b por a%m e b%m, respectivamente.
+Esta substituição garante a segunda afirmação, e as regras da aritmética
+modular garantem a primeira.
+
+Suponha agora que esta invariante seja verdadeira no início da execução
+de um laço. Podemos decompor b em bl e bh (b low e b high), da seguinte forma:
+bl = b % 2**step, bh = b/2**step. No código, bl é computado como (b & mask)
+e bh é (b >> step). Note que b == bh * 2**step + bl.
+
+Chamando de an, bn, resn os próximos valores de a, b e res, temos
+resn == (res + a * bl) % m
+an == (a * 2**step) % m
+bn == bh
+A segunda invariante é fácil de ser verificada. Para a primeira invariante,
+temos
+
+(resn + an * bn) % m == ( (res + a * bl) % m + (a * 2**step) % m * bh ) % m
+                     == ( (res + a * bl) % m + (a * 2**step * bh) % m ) % m
+                     == ( res + a * bl       + a * 2**step * bh       ) % m
+                     == ( res + a * (bl + 2**step * bh)               ) % m
+                     == ( res + a * b ) % m == a_0 * b_0 % m.
+
+Note que estes cálculos que acabamos de fazer assumem precisão arbitrária;
+precisamos garantir que não haverá overflow no nosso código. Na primeira linha
+do laço, temos a multiplicação de a por (b & mask). Temos a <= m-1 e
+(b & mask) <= 2**step - 1. Multiplicando ambos, ficamos com
+a * (b & mask) <= (m-1) * (2**step - 1)
+               == m * 2**step - m - 2**step + 1
+Somando res <= m-1 dos dois lados, obtemos
+res + a * (b & mask) <= m * 2**step - 2**step
+                     <= m * 2**step,
+que é representável em 64 bits, pela observação no início da demonstração.
+
+Na segunda linha, um raciocínio similar mostra que a << step == a * 2**step
+é representável em 64 bits. A última linha é trivial. Portanto, todas as
+operações feitas neste código não resultam em overflow; ou seja, as computações
+dos próximos valores de a, b e res estão corretas.
+
+Ao sair do laço, sabemos que
+(res + a * b) % m == a_0 * b_0 % m.
+Como b == 0 (pois saimos do laço), o lado esquerdo vira apenas
+res % m == a_0 * b_0 % m.
+Como 0 <= res < m (pela invariante de laço), podemos concluir que
+res == a_0 * b_0.
+
+Por último, basta provar que, sob a hipótese m < 2**63, este trecho de código
+sempre para. Como b é deslocado step unidades para a direita a cada passo
+da iteração, basta garantir que step é positivo. Como, para representar
+cada número menor que 2**63, não é necessário deixar ativo o bit mais
+significativo (que vale exatamente 2**63), __builtin_clzll(m) será, no mínimo,
+1; portanto, step é não-nulo.
+                                                                        QED
