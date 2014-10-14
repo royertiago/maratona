@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <limits.h>
+#include <stdint.h>
 #include <assert.h>
 
 /* int __builtin_ffs( int x )
@@ -55,6 +56,17 @@ int parity( unsigned x ) {
     return popcount(x) % 2;
 }
 
+uint16_t swap16( uint16_t x ) {
+    return x << 8u | x >> 8;
+}
+uint32_t swap32( uint32_t x ) {
+    return x << 24 | (x & 0xFF00) << 8 | x >> 8 & 0xFF00 | x >> 24;
+}
+uint64_t swap64( uint64_t x ) {
+    return x << 56 | (x & 0xFF00) << 40 | (x & 0xFF0000) << 24 | (x & 0xFF000000) << 8
+           | x >> 8 & 0xFF000000 | x >> 24 & 0xFF0000 | x >> 40 & 0xFF00 | x >> 56;
+}
+
 int main() {
     for( int i = -65536; i < 65535; ++i )
         assert( __builtin_ffs(i) == ffs(i) );
@@ -84,5 +96,14 @@ int main() {
     assert( __builtin_parity(UINT_MAX) == parity(UINT_MAX) );
     assert( __builtin_parity(INT_MAX) == parity(INT_MAX) );
     assert( __builtin_parity(INT_MAX+1u) == parity(INT_MAX+1u) );
+
+    for( uint16_t i = 1; i < 65535; ++i )
+        assert( __builtin_bswap16(i) == swap16(i) );
+
+    for( uint32_t i = 1; i < 1u << 31; i += 12345 )
+        assert( __builtin_bswap32(i) == swap32(i) );
+
+    for( uint64_t i = 1; i < 1u << 31; i += 1234567 )
+        assert( __builtin_bswap64(i) == swap64(i) );
     return 0;
 }
