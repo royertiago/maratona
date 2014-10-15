@@ -108,3 +108,8 @@ cada número menor que 2**63, não é necessário deixar ativo o bit mais
 significativo (que vale exatamente 2**63), __builtin_clzll(m) será, no mínimo,
 1; portanto, step é não-nulo.
                                                                         QED
+
+
+    Usos
+
+timus/1013.cpp

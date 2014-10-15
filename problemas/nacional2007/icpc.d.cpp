@@ -43,9 +43,8 @@ bool not_predicate( int p ) {
     return not predicate( p );
 }
 
-/* Dado um intervalo [min, max] tal que pred(max) é true, esta
- * função retorna o menor x neste intervalo que satisfaz pred(x).
- * Assumiremos que min <= max e que pred é monotônico. */
+/* Retorna o menor x no intervalo [min, max] que satisfaz pred(x).
+ * Hipóteses: min <= max, pred é monotônico, pred(max) é true. */
 int binary_search( int min, int max, bool (*pred)(int) ) {
     // Manteremos a invariante de que pred(max) == true.
     while( min < max ) {
@@ -58,15 +57,18 @@ int binary_search( int min, int max, bool (*pred)(int) ) {
     return max;
 }
 
-/* Dado um limite mínimo min, encontra o primeiro valor no intervalo
- * [min, infty) que satisfaz o predicado passado.
- * Para evitar laços intermináveis, maximum é provido como máximo
- * absoluto da busca. */
-int unbounded_binary_search( int min, bool (*pred)(int), int maximum ) {
-    int max = min <= 0 ? 1 : 2 * min;
+/* Retorna o primeiro valor no intervalo [min, infty) que satisfaz pred,
+ * ou absolute_maximum, caso nenhum exista. A função toma cuidado de não fazer 
+ * aritmética nem invocar o predicado com valores maiores que absolute_maximum.
+ * Hipóteses: 1, min < absolute_maximum; pred é monótono. */
+int unbounded_binary_search( int min, bool (*pred)(int), int absolute_maximum ) {
+    absolute_maximum--;
+    int max = min <= 0 ? 1 : min;
     while( !pred(max) )
-        if( max > maximum ) return maximum;
+        if( max >= absolute_maximum ) return absolute_maximum + 1;
+        else if( max >= absolute_maximum/2 ) max = absolute_maximum;
         else max *= 2;
+
     // Aqui, pred(max) é verdadeiro. Basta uma busca binária:
     return binary_search( min, max, pred );
 }

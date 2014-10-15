@@ -32,7 +32,7 @@ int binary_search( int min, int max, bool (*pred)(int) ) {
 }
 
 
-    Demonstração de corretude
+    Demonstração
 
 A demonstração é por invariante de laço. Manteremos a invariante de que
 pred(max) é true, e x está em [min, max].
@@ -62,3 +62,75 @@ em ao menos uma unidade. Ou seja: o laço nunca executará eternamente.
 Ou seja: o laço eventualmente termina. E, quando ele termina, min == max;
 reduzimos o espaço de busca a um único valor, e sabemos que x está neste 
 intervalo. Portanto, x == max == min.
+
+
+Agora, precisamos demonstrar que esta função possui complexidade logarítmica.
+Faremos por indução completa na diferença entre max e min.
+Proposição: O laço é executado, no máximo, ceil(log2(max - min)) vezes.
+Caso base: max == min. Neste caso, o laço nem é executado; como 
+ceil(log2(max-min) + 1) == 1, a proposição se verifica para este caso.
+Passo indutivo: assuma que vale para todas as diferenças até N,
+e suponha que max-min == N+1.
+Existem dois cenários possíveis para a próxima iteração:
+    [min, middle]
+    [middle+1, max]
+Mostraremos que, em ambos os casos, a diferença entre o máximo e o mínimo
+é menor ou igual a (N+1)/2.
+No primeiro cenário, como middle == min + (max-min)/2, temos
+    middle - min == min + (max-min)/2 - min
+                 == (max - min)/2
+                 == (N+1)/2, truncado
+Truncar um valor positivo nunca o aumenta, portanto o primeiro caso está
+analisado. Para o segundo caso, temos
+    max - (middle+1) == max - (min + (max-min)/2 + 1)
+                     == (max-min) - (max-min)/2 - 1
+                     == 2*(max-min)/2 - (max-min)/2 - 1
+                     == (max-min)/2 - 1
+                     == (N+1)/2 - 1
+                     < (N+1)/2.
+Note que não há erros com o arredondamento pois a primeira divisão 
+(na terceira linha) é exata ( 2*(max-min) sempre é par).
+
+Portanto, após cada ciclo do laço, a diferença entre as duas extremidades
+é reduzida ao menos pela metade. Agora, usaremos a hipótese indutiva:
+Q(N) é a quantidade máxima de vezes que o laço é executado, se N == max-min.
+A hipótese indutiva afirma que Q(K) <= ceil(log2(K)) para K <= N.
+Considerando os dois cenários acima, temos
+    Q(N+1) == max( Q((N+1)/2) + 1, Q((N+1)/2-1) + 1 )
+           <= max( ceil(log2((N+1)/2)), ceil(log2((N+1)/2-1)) ) + 1
+           == ceil( log2((N+1)/2) ) + 1
+           == ceil( log2(N+1) - log2(2) ) + 1
+           == ceil( log2(N+1) ) - log2(2) + 1
+           == ceil(log2(N+1)).
+                                                                    QED
+
+
+    Generalização
+
+Podemos generalizar a busca binária prara procurar num intervalo
+[min, infinito). Queremos o primeiro elemento x tal que pred(x) é 
+verdadeiro, mas não sabemos se tal x existe; para o caso de não existir,
+adicionamos um parâmetro absolute_maximum que será retornado neste caso.
+
+Hipóteses: pred é monotônico e absolute_maximum > 1.
+Garantias: pred nunca é chamado com qualquer valor >= absolute_maximum.
+
+int unbounded_binary_search( int min, bool (*pred)(int), int absolute_maximum ) {
+    absolute_maximum--;
+    int max = min <= 0 ? 1 : min;
+    while( !pred(max) )
+        if( max >= absolute_maximum ) return absolute_maximum + 1;
+        else if( max >= absolute_maximum/2 ) max = absolute_maximum;
+        else max *= 2;
+    return binary_search( min, max, pred );
+}
+
+Esta função é equivalente a executar binary_search(min, absolute_maximum, pred),
+entretanto aqui nós tomamos o cuidado de nunca executar pred(x) para
+x >= absolute_maximum, nem fazendo alguma computação intermediária com max
+que possa extrapolar absolute_maximum.
+
+
+    Usos
+
+nacional2007/icpc.d.cpp
