@@ -1,0 +1,64 @@
+busca_binaria.txt
+Implementação da busca binária num intervalo discreto.
+
+
+    Introdução
+
+A implementação correta da busca binária (e sua versão generalizada)
+é difícil de se fazer. A Wikipédia menciona um estudo para programadores
+profissionais em que 90% dos programadores falharam em construir uma
+busca binária correta. Aqui, apresentamos um algoritmo que faz essa
+busca e demonstramos sua corretude.
+
+
+    Enunciado do problema
+
+Dado um intervalo [min, max] e um predicado monotônico pred, em que
+min < max e pred(max) é verdadeiro, encontre o menor valor x 
+tal que pred(x) é verdadeiro.
+
+
+    Algoritmo
+
+int binary_search( int min, int max, bool (*pred)(int) ) {
+    while( min < max ) {
+        int middle = min + (max - min)/2;
+        if( pred(middle) )
+            max = middle;
+        else
+            min = middle + 1;
+    }
+    return max;
+}
+
+
+    Demonstração de corretude
+
+A demonstração é por invariante de laço. Manteremos a invariante de que
+pred(max) é true, e x está em [min, max].
+A invariante é satisfeita no início da execução: Por hipótese, pred(max)
+é true; e, como pred(max) é true, ao menos um elemento x satisfaz pred(x),
+portanto existe um menor elemento no intervalo [min, max].
+
+Mantento a invariante: middle está sempre entre min e max. Caso pred(middle)
+seja verdadeiro, como o predicado é monotônico, temos certeza que pred é
+satisfeito em [middle, max]. Trocando o espaço de busca para [min, middle],
+mantemos a invariante de que pred(max) é true; e, como x é o menor valor
+que satisfaz pred(x), ele deve ser menor ou igual a middle.
+Caso pred(middle) seja falso, não alteramos max, mas alteramos min. Como
+pred(middle) é falso, o menor x que satisfaz o predicato com certeza
+não está em [min, middle] (pois pred é monótono), então mudamos nosso
+espaço de busca para [middle+1, max].
+
+Note que middle nunca é igual a max. Caso (max - min) seja ímpar,
+o valor (max-min)/2 será arredondado para baixo (pois max - min sempre é
+positivo), ou seja, equivalente a (max-min-1)/2. Somando a min, temos
+o valor (max+min-1)/2 (pois a divisão é exata). Como min < max, 
+min <= max - 1, ou seja, middle é, no máximo, (2max - 2)/2 == max - 1.
+Portanto, min <= middle < max; tanto no caso em que pred(midlle) é 
+verdadeiro quanto no caso contrário, a diferença max - min é reduzida
+em ao menos uma unidade. Ou seja: o laço nunca executará eternamente.
+
+Ou seja: o laço eventualmente termina. E, quando ele termina, min == max;
+reduzimos o espaço de busca a um único valor, e sabemos que x está neste 
+intervalo. Portanto, x == max == min.
