@@ -6,4 +6,4 @@
 g++ -Wall -Wextra -Wpedantic -Wunused -Wfloat-equal -Wlogical-op \
     -Wconversion -Wuseless-cast -Wtype-limits -Wchar-subscripts \
     -Wunreachable-code -Wshadow -Wwrite-strings -Wformat=2 \
-    "$@"
+    -std=c++11 "$@"

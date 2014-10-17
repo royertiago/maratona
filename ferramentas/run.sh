@@ -29,29 +29,24 @@ get_input_format() {
 }
 
 # readflags()
-# Função que criticará a entrada de dados e modificará as variáveis
-# filename e CXX de acordo com sua semânticae
+# Função que criticará a entrada de dados e modificará filename de acordo.
 readflags() {
     if [ -z $1 ]
     then
-        echo "Usage: $0 judge/file [compiler]"
+        echo "Usage: $0 judge/file"
         exit 1
     fi
 
     filename=$1
-
-    CXX="g++ -std=c++11"
-    if [ ! -z $2 ]
-    then
-        CXX=$2
-    fi
 }
 
 # compile( filename )
 # Função que compilará o prpgrama.
+# A função altera a variável global CXX para corresponder ao comando de
+# compilação executado.
 compile() {
-    echo $CXX $filename
-    $CXX $filename
+    CXX="g++ -std=c++11 -O2 -w $filename"
+    $CXX
 }
 
 # remove_extension( filename )
@@ -67,23 +62,75 @@ remove_extension() {
 }
 
 
+# Funções que contam o tempo.
+# As variáveis globais clock_counted e clock_tmp são usadas
+# para manter o estado do relógio.
+
+# clock_reset()
+# Reinicia a contagem do tempo.
+clock_reset() {
+    clock_counted=0
+}
+
+# clock_start
+# Inicia a contagem do tempo.
+clock_start() {
+    clock_tmp=$(date +%s%N)
+}
+
+# clock_stop
+# Para a contagem do tempo
+clock_stop() {
+    local tmp=$(date +%s%N)
+    clock_counted=$((tmp - clock_tmp + clock_counted))
+}
+
+# clock_ms()
+# Escreve na tela a quantidade de milissegundos medidos pelo relógio.
+clock_ms() {
+    echo $((clock_counted / 1000000))
+}
+
+
+
 # main
 
-set -e
-
 readflags "$@"
-compile "$filename"
+compile
+if [ $? -ne 0 ]
+then
+    echo $CXX
+    echo "CE - Compilation Error"
+    exit 1
+fi
 get_input_format "$filename" "$(pwd)"
 inputformat $filename
 
-time_then=$(date +%s%N)
+
+clock_reset
 
 for file in $inputformat_files
 do
-    echo $file
-    ./a.out < $file | diff - $($inputformat_sed <<< "$file")
+    tempfile=$(mktemp XXXXX_program_output)
+    clock_start
+    # Isso redireciona erros de execução para /dev/null.
+    { ./a.out < $file > $tempfile; } >& /dev/null
+
+    if [ $? -ne 0 ]
+    then
+        echo "RE - Runtime Error"
+        rm $tempfile
+        exit 1
+    fi
+    clock_stop
+    diff $tempfile $($inputformat_sed <<< "$file") > /dev/null
+    if [ $? -ne 0 ]
+    then
+        echo "WA - Wrong Answer"
+        rm $tempfile
+        exit 1
+    fi
+    rm $tempfile
 done
 
-time_now=$(date +%s%N)
-milisseconds=$(dc -e "$time_now $time_then - 1000000 / n")
-echo Tempo total: $milisseconds ms
+echo AC - Accepted - Total runtime: $(clock_ms) ms
