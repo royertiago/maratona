@@ -1,4 +1,4 @@
-/* D.cpp
+/* D.a.cpp
  * Problema da etapa regional da maratona de 2014
  */
 
