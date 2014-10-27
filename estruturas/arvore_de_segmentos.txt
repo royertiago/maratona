@@ -1,0 +1,131 @@
+arvore_de_segmentos.txt
+Implementação e demonstração de corretude para árvores de segmentos. (incompleto)
+
+    Introdução
+
+Árvore de Segmentos é uma estrutura de dados construída sobre um vetor.
+Em sua forma mais simples, ela retorna, eficientemente, o resultado de
+uma operação associativa aplicada num intervalo de valores desse vetor.
+Sua versão mais generalizada é capaz de executar atualizações em intervalos
+também de forma eficiente. Neste artigo, construiremos e demonstraremos
+corretude e complexidade desta estrutura.
+
+Nota: em inglês, os termos "segment tree", "interval tree" e "range tree"
+são usados com certa confusão. Embora representem estruturas de dados
+diferentes da descrita acima (http://en.wikipedia.org/wiki/Segment_tree,
+http://en.wikipedia.org/wiki/Interval_tree, http://en.wikipedia.org/wiki/Range_tree)
+nos referiremos a esta estrutura como "árvore de segmentos".
+
+    Forma simplificada
+
+Esta versão permite apenas buscas no segmento. Dado um tipo T, uma operação
+associativa T op( T, T ) e um vetor (indexado em 1) vec, uma árvore de
+segmentos é capaz de retornar op( vec[i], vec[i+1], vec[i+2], ..., vec[j] )
+em tempo logarítmico, após um preprocessamento em tempo linear.
+(Denotaremos a operação por op(i..j).)
+
+A ideia por trás da árvore de segmentos é dividir o vetor em intervalos e
+precomputar op nestes intervalos. Um nodo representa um intervalo. Este intervalo
+é dividido ao meio, e cada metade é repassada a um de seus filhos. Por sua
+vez, eles divididos ao meio novamente, e assim até chegar no caso base: o intervalo
+conter apenas um elemento. Por exemplo, um vetor com dezesseis ficaria assim:
+
+
+    |-------------------------------------------------------------------------------|
+    |                                    [1, 16]                                    |
+    |---------------------------------------|---------------------------------------|
+    |                [1, 8]                 |               [9, 16]                 |
+    |---------------------------------------|---------------------------------------|
+    |       [1, 4]      |       [5, 8]      |       [9, 12]     |       [13, 16]    |
+    |---------|---------|---------|---------|---------|---------|---------|---------|
+    |  [1, 2] |  [3, 4] |  [5, 6] |  [7, 8] | [9, 10] | [11,12] | [13,14] | [15,16] |
+    |----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+    |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+    |----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+
+Existem 31 nodos nesta árvore, mas em apenas 15 deles precisamos executar op.
+Usaremos a associatividade para fazer as consultas. Para calcular (por exemplo)
+op(2..6), primeiro consultamos o nodo [1, 16]. A metade é 8; o intervalo consultado 
+está inteiramente no filho da esquerda, então repassamos a consulta para o nodo [1, 8].
+Agora, temos de dividir a consulta, pois parte do intervalo está em cada nodo. Para
+o filho da direita, consultamos op(5..6). O nodo [5, 8] redireciona para o nodo [5, 6],
+que retorna a consulta. Do lado esquerdo, fazemos mais uma divisão em [1, 4], mas note
+que a extremidade direita do intervalo está "colada" no intervalo maior, portanto esta
+subconsulta precisará descer apenas um nodo. É precisamente este comportamento que
+confere complexidade logarítmica à árvore. Ao fim da recursão, teremos recuperado os
+as consultas op(2..2), op(3..4) e op(5..6). Como op é associativa, podemos calcular
+op(2..6) a partir destes valores. Note que percorremos apenas 7 nodos; em geral,
+precisaremos percorrer, no máximo, 4 * log2(n) elementos.
+
+    Código
+
+/* Este código permite consulta em intervalo e atualização em um ponto. */
+template< typename T, typename U >
+struct segment_tree {
+    T data[2*MAX2];
+    T (*merge)( T, T );
+    T identity;
+    T (*apply)( T, U );
+    int size;
+
+    /* Constrói (ou reconstrói) a árvore de segmentos.
+     * gen# é a função geradora sobre a qual a árvore será construída;
+     * new_size é o novo tamanho da árvore. */
+    void reset( int new_size, T (*gen)(unsigned) ) {
+        size = new_size;
+        reset( 1, size, 1, gen );
+    }
+
+    /* Retorna op(a, a+1, a+2, ..., b). */
+    T query( int min, int max ) {
+        return query( min, max, 1, size, 1 );
+    }
+    void update( int i, U value ) {
+        update( i, 1, size, 1, value );
+    }
+
+    T reset( int smin, int smax, int index, T (*gen)(unsigned) ) {
+        int middle = (smin + smax)/2;
+        if( smin == smax )
+            return data[index] = gen(smin);
+
+        return data[index] = merge( 
+            reset(smin, middle, 2*index, gen),
+            reset(middle+1, smax, 2*index+1, gen)
+        );
+    }
+    T query( int min, int max, int smin, int smax, int index ) {
+        int middle = (smin + smax)/2;
+        if( min == smin && max == smax )
+            return data[index];
+        T left = identity, right = identity;
+        if( min <= middle )
+            left = query( min, std::min(max, middle), smin, middle, 2*index);
+        if( max >= middle + 1 )
+            right = query( std::max(min, middle+1), max, middle+1, smax, 2*index+1 );
+        return merge(left, right);
+    }
+    T update( int i, int smin, int smax, int index, U value ) {
+        int middle = (smin + smax)/2;
+        if( smin == smax )
+            return data[index] = apply(data[index], value);
+        T left = data[2*index], right = data[2*index+1];
+        if( i <= middle )
+            left = update( i, smin, middle, 2*index, value );
+        if( i >= middle + 1 )
+            right = update( i, middle+1, smax, 2*index+1, value );
+        return data[index] = merge(left, right);
+    }
+};
+
+Se MAX é o tamanho máximo para new_size, MAX2 é a menor potência de 2 maior
+ou igual a MAX. Esta implementação mostra uma árvore de segmentos semelhante
+à implementação em vetor de um heap.
+
+    Exemplos de uso
+
+regional2011/homem
+nacional2012/I
+spoj/brckts
+spoj/horrible
+ctu2005/c
