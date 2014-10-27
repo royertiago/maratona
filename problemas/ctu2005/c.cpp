@@ -1,5 +1,6 @@
-/* crane.cpp
- * Problema: http://poj.org/problem?id=2991
+/* c.cpp
+ * Problema C da competição CTU Open 2005.
+ * Mirror: http://poj.org/problem?id=2991
  *
  * Árvore de segmentos.
  */

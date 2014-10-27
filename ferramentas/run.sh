@@ -8,6 +8,16 @@
 # Definição do formato das entradas:
 # Assumir-se-á que existe, em algum dos diretórios-pai, um arquivo chamado
 # inputformat.sh. Para mais informações, veja problemas/inputformat.sh
+#
+# Opcionalmente, um arquivo .judge.sh, com mesmo nome do arquivo de entrada,
+# pode ser fornecido para executar o julgamento; este arquivo deve definir
+# uma função judge_function, que será executada com três parâmetros:
+#  <arquivo de entrada> <arquivo de saída> <saída do programa>
+# O arquivo de saída será obtido a partir do inputformat_sed.
+# A função deve retornar um valor numérico igual a zero para indicar aceitação
+# da entrada, ou diferente de zero para indicar rejeição.
+# Outras variáveis globais e funções podem ser definidas, desde que prefixadas
+# com "judge_".
 
 
 # get_input_format( file_name, old_wd )
@@ -91,7 +101,11 @@ clock_ms() {
     echo $((clock_counted / 1000000))
 }
 
-
+# judge_default (ignored) correct_solution program_output
+# Julgamento padrão: executa diff da entrada.
+default_judge() {
+    diff $3 $2 > /dev/null
+}
 
 # main
 
@@ -106,6 +120,15 @@ fi
 get_input_format "$filename" "$(pwd)"
 inputformat $filename
 
+optional_judge_file=$(remove_extension $filename).judge.sh
+
+if [ -f $optional_judge_file ]
+then
+    source $optional_judge_file
+    judge=judge_function
+else
+    judge=default_judge
+fi
 
 clock_reset
 
@@ -113,6 +136,7 @@ for file in $inputformat_files
 do
     tempfile=$(mktemp XXXXX_program_output)
     clock_start
+
     # Isso redireciona erros de execução para /dev/null.
     { ./a.out < $file > $tempfile; } >& /dev/null
 
@@ -123,7 +147,7 @@ do
         exit 1
     fi
     clock_stop
-    diff $tempfile $($inputformat_sed <<< "$file") > /dev/null
+    $judge $file $($inputformat_sed <<< "$file") $tempfile
     if [ $? -ne 0 ]
     then
         echo "WA - Wrong Answer"
