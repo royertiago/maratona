@@ -54,9 +54,9 @@ struct segment_tree {
             return data[index] = apply( data[index], value, max - min + 1 );
         }
         T left = data[2*index], right = data[2*index+1];
-        if( min >= smin && min <= middle )
+        if( min <= middle )
             left = update( min, std::min(max, middle), smin, middle, 2*index, value );
-        if( max <= smax && max >= middle + 1)
+        if( max >= middle + 1)
             right = update( std::max(min, middle+1), max, middle+1, smax, 2*index + 1, value );
         return data[index] = apply( data_merge(left, right), lazy[index], smax - smin + 1 );
     }
@@ -66,9 +66,9 @@ struct segment_tree {
         if( min == smin && max == smax )
             return data[index];
         T left = data_identity, right = data_identity;
-        if( min >= smin && min <= middle )
+        if( min <= middle )
             left = query( min, std::min(max, middle), smin, middle, 2*index );
-        if( max <= smax && max >= middle + 1 )
+        if( max >= middle + 1 )
             right = query( std::max(min, middle+1), max, middle+1, smax, 2*index + 1 );
         return apply( data_merge(left, right), lazy[index], max - min + 1 );
     }

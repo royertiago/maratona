@@ -1,15 +1,13 @@
-/* brckts.cpp
- * Problema: http://www.spoj.com/problems/BRCKTS/
+/* I.cpp
+ * Problema da etapa nacional da Maratona de 2012.
+ * Mirror: http://uva.onlinejudge.org/index.php?option=com_onlinejudge&Itemid=8&page=show_problem&problem=3977
  *
- * Árvore de segmentos, sem lazy propagation.
+ * Árvore de segmentos.
  */
 #include <stdio.h>
-#include <limits.h>
 #include <algorithm>
+#define MAX2 131072 // 2^17 > 10^5
 
-#define MAX2 32768
-
-// Árvore de segmentos sem lazy propagation.
 template< typename T, typename U >
 struct segment_tree {
     T data[2*MAX2];
@@ -18,9 +16,9 @@ struct segment_tree {
     T (*apply)( T, U );
     int size;
 
-    void reset( int new_size, T (*gen)(unsigned) ) {
+    void rebuild( const T * source, int new_size ) {
         size = new_size;
-        reset( 1, size, 1, gen );
+        rebuild( 1, size, 1, source );
     }
     T query( int min, int max ) {
         return query( min, max, 1, size, 1 );
@@ -29,14 +27,14 @@ struct segment_tree {
         update( i, 1, size, 1, value );
     }
 
-    T reset( int smin, int smax, int index, T (*gen)(unsigned) ) {
+    T rebuild( int smin, int smax, int index, const T * source ) {
         int middle = (smin + smax)/2;
         if( smin == smax )
-            return data[index] = gen(smin);
+            return data[index] = source[smin];
 
         return data[index] = merge( 
-            reset(smin, middle, 2*index, gen),
-            reset(middle+1, smax, 2*index+1, gen)
+            rebuild(smin, middle, 2*index, source),
+            rebuild(middle+1, smax, 2*index+1, source)
         );
     }
     T query( int min, int max, int smin, int smax, int index ) {
@@ -63,52 +61,46 @@ struct segment_tree {
     }
 };
 
-struct word {
-    int l; // left brackets
-    int r; // right brackets
-};
-
-word merge( word l, word r ) {
-    return (word) {l.l + r.l - std::min(l.r, r.l),
-            r.r + l.r - std::min(l.r, r.l)};
+char merge( char a, char b ) {
+    if( a == '0' || b == '0' )
+        return '0';
+    if( a == '+' && b == '-' || a == '-' && b == '+' )
+        return '-';
+    return '+';
 }
 
-char str[30000+1];
-word gen( unsigned i ) {
-    if( str[i-1] == ')' ) return (word) {1, 0};
-    return (word) {0, 1};
+char to_char( int i ) {
+    if( i == 0 ) return '0';
+    if( i > 0 ) return '+';
+    return '-';
 }
 
-word apply( word a, int ) {
-    return (word) {a.r, a.l};
+char apply( char, char a ) {
+    return a;
 }
 
 int main() {
-    segment_tree< word, int > tree;
+    segment_tree<char, char> tree;
     tree.merge = merge;
-    tree.identity = (word) {0, 0};
     tree.apply = apply;
-
-    int C = 1, size;
-    while( scanf("%d\n", &size) != EOF ) {
-        scanf( "%s", str );
-        printf( "Test %i:\n", C++ );
-        tree.reset( size, gen );
-        int Q;
-        scanf( "%d", &Q );
-        while( Q-- ) {
-            int t;
-            scanf( "%d", &t );
-            if( t == 0 ) {
-                word w = tree.query( 1, size );
-                if( w.l == 0 && w.r == 0 )
-                    printf( "YES\n" );
-                else
-                    printf( "NO\n" );
-            } else {
-                tree.update( t, 1 );
-            }
+    tree.identity = '+';
+    char origin[100*1000+1];
+    int N, K;
+    while( scanf("%d%d", &N, &K) != EOF ) {
+        int a, b; char op[2];
+        for( int i = 1; i <= N; ++i ) {
+            scanf( "%d", &a );
+            origin[i] = to_char(a);
         }
+        tree.rebuild( origin, N );
+        while( K-- ) {
+            scanf( "%s%d%d", op, &a, &b );
+            if( op[0] == 'P' )
+                printf( "%c", tree.query( a, b ) );
+            else
+                tree.update( a, to_char(b) );
+        }
+        printf( "\n" );
     }
     return 0;
 }
