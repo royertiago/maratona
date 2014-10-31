@@ -1,7 +1,8 @@
 /* 2191.cpp
- * Problema: http://acm.cs.ecnu.edu.cn/problem.php?problemid=2191
+ * Problema C da rodada 1C do Google Code Jam de 2008.
+ *
+ * Mirror: http://acm.cs.ecnu.edu.cn/problem.php?problemid=2191
  * Mirror: http://acm.tju.edu.cn/toj/showp3349.html
- * Mirror: https://code.google.com/codejam/contest/32015/dashboard#s=p2
  */
 #include <stdio.h>
 #include <algorithm>

@@ -1,5 +1,7 @@
 /* 2189.cpp
- * Problema: http://acm.cs.ecnu.edu.cn/problem.php?problemid=2189
+ * Problema A da rodada 1C do Google Code Jam de 2008.
+ *
+ * Mirror: http://acm.cs.ecnu.edu.cn/problem.php?problemid=2189
  */
 #include <stdio.h>
 #include <algorithm>
