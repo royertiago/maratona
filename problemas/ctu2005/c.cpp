@@ -75,24 +75,24 @@ struct segment_tree {
 struct crane {
     double x, y; // end point
     double end_angle;
+    crane() {}
+    crane( double x, double y, double end_angle ) :
+        x(x), y(y), end_angle(end_angle) {}
 };
 
 crane merge( crane a, crane b ) {
     double x = b.x * cos(a.end_angle) - b.y * sin(a.end_angle);
     double y = b.x * sin(a.end_angle) + b.y * cos(a.end_angle);
-//  printf( "Merge - %.2lf %.2lf (%.2lf) + %.2lf %.2lf (%.2lf) == %.2lf %.2lf (%.2lf)\n",
-//          a.x, a.y, a.end_angle, 
-//          b.x, b.y, b.end_angle, a.x+x, a.y+y, a.end_angle + b.end_angle );
-    return {x + a.x, y + a.y, a.end_angle + b.end_angle};
+    return crane(x + a.x, y + a.y, a.end_angle + b.end_angle);
 }
 
 crane apply( crane a, int n ) {
-    return {a.x, a.y, (n-180)*(PI/180)};
+    return crane(a.x, a.y, (n-180)*(PI/180));
 }
 
 int sizes[MAX];
 crane gen( unsigned i ) {
-    return {0, sizes[i-1], 0};
+    return crane(0, sizes[i-1], 0);
 }
 int N, C;
 
@@ -100,7 +100,7 @@ int main() {
     segment_tree< crane, int > tree;
     tree.merge = merge;
     tree.apply = apply;
-    tree.identity = {0, 0, 0};
+    tree.identity = crane(0, 0, 0);
     const char * str = "";
 
     while( scanf("%d%d", &N, &C) != EOF ) {
@@ -109,17 +109,11 @@ int main() {
         for( int i = 0; i < N; ++i )
             scanf( "%d", &sizes[i] );
         tree.reset( N, gen );
-//      for( int i = 1; i <= 7; i++ )
-//          printf( "[%5.2lf %5.2lf %5.2lf] ", tree.data[i].x, tree.data[i].y, tree.data[i].end_angle/PI );
-//      printf( "\n" );
         while( C-- ) {
             int n, a;
             scanf( "%d%d", &n, &a );
             tree.update( n, n, a );
             crane c = tree.query( 1, N );
-//          for( int i = 1; i <= 7; i++ )
-//              printf( "[%5.2lf %5.2lf %5.2lf] ", tree.data[i].x, tree.data[i].y, tree.data[i].end_angle/PI );
-//          printf( "\n" );
             printf( "%.2lf %.2lf\n", c.x, c.y );
         }
     }

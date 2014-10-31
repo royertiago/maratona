@@ -5,7 +5,7 @@
 # O objetivo é preparar a entrada para rodar um diff contra apenas a "aparência"
 # do arquivo de entrada, e deixar as diferenças de ponto flutuante para fpdiff.
 judge_reformat() {
-    sed -e 's/-\(0*.0\+\|0\+.0*\)/\1/' $1 | sed -e 'y/0123456789/XXXXXXXXXX/'
+    sed -e 's/-\(0*.0\+\|0\+.0*\)/\1/g' $1 | sed -e 'y/0123456789/XXXXXXXXXX/'
     # Embora essa reformatação esteja sujeita a -0.005 (pois o 5 não faz parte
     # da expressão regular), não há problema pois ferramentas/fpdiff 
     # dá conta do resto.
