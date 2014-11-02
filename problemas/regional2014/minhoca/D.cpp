@@ -1,9 +1,8 @@
-/* D.b.cpp
+/* D.cpp
  * Problema da etapa regional da Maratona de 2014.
  *
- * Implementação equivalente ao arquivo anterior, mas usando
- * std::set para implementar Dijkstra, e fazendo a busca em
- * profundidade não-recursiva. */
+ * Mirror: http://uva.onlinejudge.org/index.php?option=com_onlinejudge&Itemid=8&page=show_problem&problem=4659
+ */
 #include <stdio.h>
 #include <set>
 #include <vector>
@@ -99,30 +98,34 @@ void dijkstra( int source ) {
 }
 
 int main() {
-    scanf( "%d%d", &S, &T );
-    for( int i = 0; i < T; ++i ) {
-        int a, b, w;
-        scanf( "%d%d%d", &a, &b, &w );
-        a--; b--;
-        graph[a].push_back({w, b});
-        graph[b].push_back({w, a});
-    }
-    dfs();
-    int Q;
-    scanf( "%d", &Q );
-    while( Q-- ) {
-        int source, lenght;
-        scanf( "%d%d", &source, &lenght );
-        dijkstra( source-1 );
+    while( scanf( "%d%d", &S, &T ) != EOF ) {
+        for( int i = 0; i < S; i++ )
+            graph[i].clear();
 
-        int best = 2*1000*1000+1;
-        for( int i = 0; i < S; ++i )
-            if( cycle[i] >= lenght )
-                best = min( best, 2*distance[i] + cycle[i] );
-        if( best == 2*1000*1000+1 )
-            printf( "-1\n" );
-        else
-            printf( "%i\n", best );
+        for( int i = 0; i < T; ++i ) {
+            int a, b, w;
+            scanf( "%d%d%d", &a, &b, &w );
+            a--; b--;
+            graph[a].push_back({w, b});
+            graph[b].push_back({w, a});
+        }
+        dfs();
+        int Q;
+        scanf( "%d", &Q );
+        while( Q-- ) {
+            int source, lenght;
+            scanf( "%d%d", &source, &lenght );
+            dijkstra( source-1 );
+
+            int best = 2*1000*1000+1;
+            for( int i = 0; i < S; ++i )
+                if( cycle[i] >= lenght )
+                    best = min( best, 2*distance[i] + cycle[i] );
+            if( best == 2*1000*1000+1 )
+                printf( "-1\n" );
+            else
+                printf( "%i\n", best );
+        }
     }
     return 0;
 }
