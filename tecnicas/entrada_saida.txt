@@ -22,6 +22,7 @@ spoj-br/f91.a.cpp é aceita (em 1.00s); uma otimização presente em
 spoj-br/f91.b.cpp baixa este tempo para 0.58s. Já spoj-br/f91.c.cpp,
 igual à solução 'b' (exceto por usar iostream), excede o tempo limite. 
 (Mais observações deveriam ser feitas para estabelecer uma diretriz,
+e com compiladores modernos - spoj.com usava o gcc 4.3 no momento do teste -
 mas, na dúvida, vá de printf.)
 
 Nota sobre cstdio: stdio.h é um cabeçalho do C. Uma das principais metas
