@@ -1,4 +1,9 @@
 /* Problema B da seletiva doméstica da UDESC de 2015.
+ *
+ * Complexidade: n^2 * 2^n
+ * Complexidade do precompute_masks: n^4 2^(n/2)
+ * (precompute_masks é n^4 pois o laço interno usa std::string::find,
+ * que é O(n^2).)
  */
 #include <algorithm>
 #include <iostream>
@@ -8,7 +13,6 @@
 
 std::string source, target;
 
-int dp[1 << 18];
 /* Esta programação dinâmica será indexada por máscaras de bits.
  * Cada máscara indicará quais os índices da palavra de destino
  * já foram obtidos. Por exemplo, se target == "ACTG",
@@ -23,6 +27,7 @@ int dp[1 << 18];
  * O valor deste índice será, portanto, o mínimo destes conjuntos
  * somado de 1.
  */
+int dp[1 << 18];
 
 /* Defina str = target[i, i+1, ..., j], rev = target[j, j-1, ..., i].
  * Verdadeiro caso seja possível gerar str ou rev a partir do estado atual,
@@ -30,7 +35,6 @@ int dp[1 << 18];
  */
 bool produces( int bitmask, int i, int j );
 
-bool source_substr[18][18];
 /* Estrutura de dados para acelerar a consulta a produces.
  * source_substr[i][j] é verdadeiro se e somente se
  * ou target[i, i+1, ..., j] for uma substring de source
@@ -40,11 +44,8 @@ bool source_substr[18][18];
  * e permitirá consulta em O(1) à primeira metade do produces:
  * determinar se dá para gerar str a partir de source.
  */
+bool source_substr[18][18];
 
-int lower_mask[1 << 9][18][18];
-bool upper_mask[1 << 9][18][18];
-int lower_mask_r[1 << 9][18][18];
-bool upper_mask_r[1 << 9][18][18];
 /* Estruturas de dados para acelerar a segunda metade do produces.
  * Divida a máscara atual em duas: upper e lower, cada uma com metade dos bits
  * --- convencionaremos deixar lower com mais bits se a divisão não for exata.
@@ -74,6 +75,11 @@ bool upper_mask_r[1 << 9][18][18];
  *
  * lower_mask_r e upper_mask_r são análogos, mas para str == target[j, j-1, ..., i].
  */
+int lower_mask[1 << 9][18][18];
+bool upper_mask[1 << 9][18][18];
+int lower_mask_r[1 << 9][18][18];
+bool upper_mask_r[1 << 9][18][18];
+
 int lower_mask_size;
 int upper_mask_size;
 
@@ -84,12 +90,12 @@ void precompute_masks() {
     for( int lower = 0; lower < (1 << lower_mask_size); lower++ )
     for( int i = 0; i < target.size(); i++ )
     for( int j = i; j < target.size(); j++ ) {
-        int lower_tmp = lower;
-        std::string target_tmp = target;
         std::string str = target.substr(i, j - i + 1);
         std::string rev( str.rbegin(), str.rend() ); // reverse string
 
-        std::string::iterator it = target_tmp.begin();
+        int lower_tmp = lower;
+        std::string target_tmp = target;
+        auto it = target_tmp.begin();
         for( int k = 0; k < lower_mask_size; ++k, ++it, lower_tmp >>= 1 )
             if( (lower_tmp & 1) == 0 )
                 *it = '.';
@@ -119,7 +125,7 @@ void precompute_masks() {
         std::string str = target.substr(i, j - i + 1);
         std::string rev( str.rbegin(), str.rend() ); // reverse string
 
-        std::string::iterator it = target_tmp.begin() + lower_mask_size;
+        auto it = target_tmp.begin() + lower_mask_size;
         for( int k = 0; k < upper_mask_size; ++k, ++it, upper_tmp >>= 1 )
             if( (upper_tmp & 1) == 0 )
                 *it = '.';
