@@ -90,12 +90,12 @@ void precompute_masks() {
         std::string rev( str.rbegin(), str.rend() ); // reverse string
 
         std::string::iterator it = target_tmp.begin();
-        for( ; lower_tmp != 0; ++it, lower_tmp >>= 1 )
+        for( int k = 0; k < lower_mask_size; ++k, ++it, lower_tmp >>= 1 )
             if( (lower_tmp & 1) == 0 )
                 *it = '.';
 
         int index = target_tmp.find(str);
-        if( index > lower_mask_size )
+        if( index == std::string::npos || index >= lower_mask_size )
             lower_mask[lower][i][j] = -1;
         else if( index + str.size() <= lower_mask_size )
             lower_mask[lower][i][j] = 0;
@@ -103,7 +103,7 @@ void precompute_masks() {
             lower_mask[lower][i][j] = index + str.size() - lower_mask_size;
 
         index = target_tmp.find(rev);
-        if( index > lower_mask_size )
+        if( index == std::string::npos || index >= lower_mask_size )
             lower_mask_r[lower][i][j] = -1;
         else if( index + str.size() <= lower_mask_size )
             lower_mask_r[lower][i][j] = 0;
@@ -120,7 +120,7 @@ void precompute_masks() {
         std::string rev( str.rbegin(), str.rend() ); // reverse string
 
         std::string::iterator it = target_tmp.begin() + lower_mask_size;
-        for( ; upper_tmp != 0; ++it, upper_tmp >>= 1 )
+        for( int k = 0; k < upper_mask_size; ++k, ++it, upper_tmp >>= 1 )
             if( (upper_tmp & 1) == 0 )
                 *it = '.';
 
@@ -192,10 +192,6 @@ int solve( int bitmask ) {
     return dp[bitmask] = min + 1;
 }
 
-bool substr( std::string & str, std::string & of ) {
-    return std::strstr(of.c_str(), str.c_str()) != NULL;
-}
-
 bool produces( int bitmask, int i, int j ) {
     if( source_substr[i][j] )
         return true;
@@ -214,7 +210,7 @@ bool produces( int bitmask, int i, int j ) {
         goto reverse_construct; // porque foda-se o Melga
 
     shift = (1 << lower_mask[lower][i][j]) - 1;
-    if( upper & shift == shift )
+    if( (upper & shift) == shift )
         /* shift está toda contida em upper;
          * isto significa que os lower_mask[lower][i][j] bits inferiores
          * de upper estão em 1. Portanto, podemos construir str usando bitmask.
@@ -228,7 +224,7 @@ reverse_construct:
         return false;
 
     shift = (1 << lower_mask_r[lower][i][j]) - 1;
-    if( upper & shift == shift )
+    if( (upper & shift) == shift )
         return true;
 
     return false;
