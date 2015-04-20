@@ -69,6 +69,17 @@ Point Point::normalized() const {
 std::pair<Point, Point> circle_center( Point x, Point y ) {
     Point z = (x + y)/2;
     Point vec = x - y;
+    if( d(vec, Point{0, 0}) < 1e-7 ) {
+        /* Caso extremo: os dois pontos estão um quase em cima do outro.
+         * O enunciado do problema disse para assumir que a resposta não se altera
+         * caso o diâmetro do círculo aumentar em 1e-5,
+         * portanto, qualquer círculo que envolva x envolverá, também, y.
+         *
+         * Retornaremos o par (x, y) para forçar o laço principal a lidar com
+         * o caso de darmos uma tigelada em cima de um desses círculos.
+         */
+        return std::make_pair(x, y);
+    }
     Point orth{vec.y, -vec.x};
     orth = orth.normalized();
 
@@ -90,14 +101,8 @@ std::pair<Point, Point> circle_center( Point x, Point y ) {
     return std::make_pair( z + orth*b, z - orth*b );
 }
 
-/* O algoritmo acima tem um problema: a etapa de normalização pode resultar
- * numa divisão por zero, exatamente quando os mosquitos estão um em cima do outro.
- * Resolveremos este caso separadamente.
- * overlap_count[i] é a quantidade de mosquitos que estão no ponto list[i].
- */
 int point_count;
 Point list[32];
-int overlap_count[32];
 
 /* Retorna o máximo de mosquitos que podem ser mortos
  * caso o centro da tigela esteja em c. */
@@ -110,30 +115,23 @@ int max_centered( Point c ) {
 }
 
 int solve() {
-    int max = 0;
+    /* Há ainda um caso extremo a considerar: caso todos os pontos
+     * fiquem longe demais. Neste caso (cuja resposta é 1)
+     * sempre cairemos dentro daquele if interno,
+     * e devolveremos o valor inicial de "max".
+     * Portanto, basta escolher 1 para o valor inicial de max.
+     */
+    int max = 1;
     for( int i = 0; i < point_count; i++ )
         for( int j = i+1; j < point_count; j++ ) {
             if( d(list[i], list[j]) > 2*radius )
                 continue; // Muito longe, não forma círculo.
-
-            if( d(list[i], list[j]) < 1e-6 ) {
-                /* Possivelmente divisão por zero.
-                 * Apenas incrementaremos overlap_count.
-                 * Resolveremos a ação de dar a tigelada no ponto list[i] abaixo.
-                 */
-                overlap_count[i]++;
-                overlap_count[j]++;
-                continue;
-            }
 
             auto pair = circle_center(list[i], list[j]);
             max = std::max(max, max_centered(pair.first));
             max = std::max(max, max_centered(pair.second));
         }
 
-    for( int i = 0; i < point_count; i++ )
-        /* Corresponde a dar uma tigelada centra em list[i]. */
-        max = std::max(max, overlap_count[i]);
     return max;
 }
 
@@ -143,9 +141,6 @@ int main() {
     while( t-- ) {
         scanf( "%d %lf", &point_count, &radius );
         radius /= 2;
-        for( int i = 0; i < point_count; i++ )
-            overlap_count[i] = 1;
-
         for( int i = 0; i < point_count; i++ )
             scanf( "%lf %lf", &list[i].x, &list[i].y );
 
