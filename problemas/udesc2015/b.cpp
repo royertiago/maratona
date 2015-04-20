@@ -41,6 +41,96 @@ bool source_substr[18][18];
  * determinar se dá para gerar str a partir de source.
  */
 
+int lower_mask[1 << 9][18][18];
+bool upper_mask[1 << 9][18][18];
+int lower_mask_r[1 << 9][18][18];
+bool upper_mask_r[1 << 9][18][18];
+/* Estruturas de dados para acelerar a segunda metade do produces.
+ * Divida a máscara atual em duas: upper e lower, cada uma com metade dos bits
+ * --- convencionaremos deixar lower com mais bits se a divisão não for exata.
+ * lower_mask[lower][i][j] codificará informações a respeito da construtibilidade
+ * de target[i, i+1, ..., j] a partir de target, quando target estiver mascarado
+ * por uma máscara de bits cujos bits inferiores forem lower.
+ *
+ * Chame str = target[i, i+1, ..., j]
+ *
+ * lower_mask[lower][i][j] == 0 indica que é possível construir str a partir
+ * daquela máscara, independente de qual forem os bits superiores.
+ * Isso só é possível se a máscara inferior for suficiente
+ * para construir str sozinha.
+ *
+ * Se lower_mask[lower][i][j] == k com k > 0, queremos indicar que
+ * não dá para construir str usando apenas os bits inferiores,
+ * mas dá para começar a construir str usando os bits inferiores
+ * e faltam exatamente k caracteres de str, que devem estar presentes
+ * na máscara superior.
+ *
+ * Caso não dê nem para começar a construir str,
+ * então lower_mask[lower][i][j] == -1.
+ *
+ * Para upper_mask[upper][i][j], apenas precisamos codificar a informação
+ * de que é possível construir str a partir da máscara usando os bits superiores
+ * da máscara, portanto upper_mask é um booleano.
+ *
+ * lower_mask_r e upper_mask_r são análogos, mas para str == target[j, j-1, ..., i].
+ */
+int lower_mask_size;
+int upper_mask_size;
+
+void precompute_masks() {
+    lower_mask_size = (target.size() + 1)/2;
+    upper_mask_size = target.size() - lower_mask_size;
+
+    for( int lower = 0; lower < (1 << lower_mask_size); lower++ )
+    for( int i = 0; i < target.size(); i++ )
+    for( int j = i; j < target.size(); j++ ) {
+        int lower_tmp = lower;
+        std::string target_tmp = target;
+        std::string str = target.substr(i, j - i + 1);
+        std::string rev( str.rbegin(), str.rend() ); // reverse string
+
+        std::string::iterator it = target_tmp.begin();
+        for( ; lower_tmp != 0; ++it, lower_tmp >>= 1 )
+            if( (lower_tmp & 1) == 0 )
+                *it = '.';
+
+        int index = target_tmp.find(str);
+        if( index > lower_mask_size )
+            lower_mask[lower][i][j] = -1;
+        else if( index + str.size() <= lower_mask_size )
+            lower_mask[lower][i][j] = 0;
+        else
+            lower_mask[lower][i][j] = index + str.size() - lower_mask_size;
+
+        index = target_tmp.find(rev);
+        if( index > lower_mask_size )
+            lower_mask_r[lower][i][j] = -1;
+        else if( index + str.size() <= lower_mask_size )
+            lower_mask_r[lower][i][j] = 0;
+        else
+            lower_mask_r[lower][i][j] = index + str.size() - lower_mask_size;
+    }
+
+    for( int upper = 0; upper < (1 << upper_mask_size); upper++ )
+    for( int i = 0; i < target.size(); i++ )
+    for( int j = i; j < target.size(); j++ ) {
+        int upper_tmp = upper;
+        std::string target_tmp = target;
+        std::string str = target.substr(i, j - i + 1);
+        std::string rev( str.rbegin(), str.rend() ); // reverse string
+
+        std::string::iterator it = target_tmp.begin() + lower_mask_size;
+        for( ; upper_tmp != 0; ++it, upper_tmp >>= 1 )
+            if( (upper_tmp & 1) == 0 )
+                *it = '.';
+
+        upper_mask[upper][i][j] =
+            target_tmp.find(str, lower_mask_size) != std::string::npos;
+        upper_mask_r[upper][i][j] =
+            target_tmp.find(rev, lower_mask_size) != std::string::npos;
+    }
+}
+
 /* Uma instância só é não-resolvível se target possuir alguma
  * base nitrogenada que source não possua.
  * Caso contrário, sempre podemos copiar uma letra de cada vez,
@@ -66,6 +156,8 @@ int solve() {
             source_substr[i][j] = source.find(str) != std::string::npos
                 || source.find(rev) != std::string::npos;
         }
+
+    precompute_masks();
 
     return solve( (1 << target.size()) - 1 );
 }
@@ -110,16 +202,36 @@ bool produces( int bitmask, int i, int j ) {
     if( __builtin_popcount(bitmask) < j - i + 1 )
         return false;
 
-    std::string masked = target;
-    std::string::iterator it = masked.begin();
-    for( ; it != masked.end(); ++it ) {
-        if( (bitmask & 1) == 0 )
-            *it = '.';
-        bitmask >>= 1;
-    }
-    std::string str = target.substr(i, j - i + 1);
-    std::string rev( str.rbegin(), str.rend() );
-    return substr(str, masked) || substr(rev, masked);
+    int lower = bitmask & ((1 << lower_mask_size) - 1);
+    int upper = bitmask >> lower_mask_size;
+    int shift;
+
+    /* Primeiro, tentaremos construir a substring na orientação correta;
+     * depois, tentaremos construir invertido. */
+    if( upper_mask[upper][i][j] )
+        return true;
+    if( lower_mask[lower][i][j] == -1 )
+        goto reverse_construct; // porque foda-se o Melga
+
+    shift = (1 << lower_mask[lower][i][j]) - 1;
+    if( upper & shift == shift )
+        /* shift está toda contida em upper;
+         * isto significa que os lower_mask[lower][i][j] bits inferiores
+         * de upper estão em 1. Portanto, podemos construir str usando bitmask.
+         */
+        return true;
+
+reverse_construct:
+    if( upper_mask_r[upper][i][j] )
+        return true;
+    if( lower_mask_r[lower][i][j] == -1 )
+        return false;
+
+    shift = (1 << lower_mask_r[lower][i][j]) - 1;
+    if( upper & shift == shift )
+        return true;
+
+    return false;
 }
 
 int main() {
